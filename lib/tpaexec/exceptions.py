@@ -70,6 +70,12 @@ class DockerPlatformError(PlatformError):
     MSG = "Docker platform error"
 
 
+class PodmanPlatformError(PlatformError):
+    """Podman specific platform error exception."""
+
+    MSG = "An error occurred during podman platform processing"
+
+
 class NetError(TPABaseException):
     """Net error exception class."""
 

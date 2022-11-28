@@ -1,0 +1,48 @@
+---
+
+# © Copyright EnterpriseDB UK Limited 2015-2021 - All rights reserved.
+
+- include_tasks: podman_images.yml
+  vars:
+    podman_image_list: "{{
+      podman_instances|map(attribute='image')|unique|list
+    }}"
+  tags: podman
+
+- name: Create podman network
+  containers.podman.podman_network:
+    name: "{{ cluster_name }}"
+  register: podman_network_result
+  tags: podman
+
+- name: Create podman pod
+  containers.podman.podman_pod:
+    name: "{{ cluster_name }}"
+  tags: podman
+
+- name: Provision podman containers
+  include_tasks: podman_container.yml
+  with_items: "{{ podman_instances }}"
+  vars:
+    podman_subnet: "{{ podman_network_result.network.subnets[0].subnet }}"
+  tags: podman
+
+- name: Set instance variables and IP
+  set_fact:
+    instance_vars: "{{
+      instance_vars|default([])|union([
+        addresses|combine({
+          'Name': item.item.Name,
+          'node': item.item.node,
+          'vars': addresses|combine(item.item|export_vars),
+          'platform': 'podman',
+        })
+      ])
+    }}"
+  with_items:
+    "{{ podman_container_results }}"
+  loop_control:
+    label: >-
+      {{ item.item.Name }}
+  vars:
+    addresses: "{{ item.item|ip_addresses }}"

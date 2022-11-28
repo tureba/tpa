@@ -52,7 +52,7 @@
     mode: 0755
   register: barman_home_ok
 
-- name: Restart cron once in docker containers
+- name: Restart cron once in docker/podman containers
   block:
     - name: Restart cron
       service:
@@ -65,7 +65,7 @@
           SUSE: cron
   when: >
     barman_home_ok is changed and
-    platform in ['docker']
+    platform in ['docker', 'podman']
 
 - name: Test barman-home-ok before invoking barman cron
   lineinfile:

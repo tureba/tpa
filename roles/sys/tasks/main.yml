@@ -69,7 +69,7 @@
     name: "{{ inventory_hostname }}"
     use: systemd
   when:
-    platform not in ['docker', 'lxd']
+    platform not in ['docker', 'lxd', 'podman']
     and target_container_type is not defined
   tags: hostname
 
@@ -115,7 +115,7 @@
     apply:
       tags: sysctl
   when:
-    platform not in ['docker', 'lxd']
+    platform not in ['docker', 'lxd', 'podman']
     and target_container_type is not defined
   tags: sysctl
 
@@ -130,7 +130,7 @@
     apply:
       tags: openvpn
   when: >
-    platform not in ['docker', 'vagrant'] and
+    platform not in ['docker', 'vagrant', 'podman'] and
     'role_openvpn-server' in groups
   tags: always
 
@@ -151,7 +151,7 @@
     apply:
       tags: cloudinit
   when: >
-    platform not in ['docker', 'lxd', 'vagrant']
+    platform not in ['docker', 'lxd', 'vagrant', 'podman']
   tags: cloudinit
 
 # The sys/ssl role is incompatible with the legacy method of generating a
@@ -187,7 +187,7 @@
     path: /run/nologin
     state: absent
   when:
-    platform in ['docker']
+    platform in ['docker', 'podman']
     or target_container_type|default('unknown') == 'docker'
 
 # RemoveIPC=no in logind.conf is necessary for source builds because

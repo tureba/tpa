@@ -118,7 +118,7 @@ def hosts_lines(module):
         if changes and not module.check_mode:
             contents = to_bytes("".join(after_lines))
 
-            if "skip" in changes and module.params["platform"] == "docker":
+            if "skip" in changes and module.params["platform"] in ["docker", "podman"]:
                 m["operation"] = "overwrite"
                 with open(b_path, "wb") as f:
                     f.write(contents)

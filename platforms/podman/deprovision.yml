@@ -1,0 +1,51 @@
+---
+
+# © Copyright EnterpriseDB UK Limited 2015-2021 - All rights reserved.
+
+- name: Deprovision podman containers
+  containers.podman.podman_container:
+    name: "{{ item.Name }}"
+    labels: >
+      {{
+        cluster_tags|combine(item.tags)|combine({
+          'Cluster': cluster_name,
+        })
+      }}
+    state: absent
+  with_items: "{{ podman_instances }}"
+  loop_control:
+    label: >-
+      {{ item.Name }}
+  tags: podman
+
+- name: Remove podman ccache volume(s)
+  containers.podman.podman_volume:
+    name: "{{ item.split(':')[0] }}"
+    state: absent
+  with_items: "{{ ccache_volumes }}"
+  vars:
+    ccache_volumes: "{{
+      query(
+        'flattened',
+        podman_instances|map(attribute='local_source_directories')
+        |select('defined')|list
+      )
+      |select('startswith', 'ccache-')|list
+      |unique
+    }}"
+  loop_control:
+    label: >-
+      {{ item.split(':')[0] }}
+  tags: podman
+
+- name: Delete podman network
+  containers.podman.podman_network:
+    name: "{{ cluster_name }}"
+    state: absent
+  tags: podman
+
+- name: Delete podman pod
+  containers.podman.podman_pod:
+    name: "{{ cluster_name }}"
+    state: absent
+  tags: podman

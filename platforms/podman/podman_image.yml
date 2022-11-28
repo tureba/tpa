@@ -1,0 +1,117 @@
+---
+
+# © Copyright EnterpriseDB UK Limited 2015-2022 - All rights reserved.
+
+# Given `image`, the name of an image referenced by instances[] that
+# does not exist locally, we must now do whatever is required to provide
+# it, or fail with an error.
+#
+# At present, TPAexec expects containers to run systemd. Most upstream
+# images are not set up to do this, so we need to build systemd-enabled
+# Docker images for supported distributions.
+#
+# By default, if the required image is named `tpa/label:version`, we
+# use ./images/Dockerfile to build an image that adds systemd and its
+# dependencies to a distribution image (say, centos:8) and runs some
+# systemctl commands to set up the required configuration.
+#
+# You can set `docker_images` to customise the build process:
+#
+#     docker_images:
+#       "some/image:ver":
+#         context_path: images/image-final
+#
+# In this example, we run `docker build` in images/image-final to build
+# an image named 'some/image:ver'.
+#
+# You can also build your own image and have TPAexec add in the required
+# systemd-specific parts. For example:
+#
+#     docker_images:
+#       "some/other:ver":
+#         base_context_path: images/other-base
+#         context_path: images/common-systemd
+#
+# Here, we run `docker build` first in images/other-base to build a base
+# image, and then again in images/common-systemd to build a final image,
+# passing in `BASE_IMAGE=${base_image_id}` as a build argument.
+#
+# (Set ``dockerfile: Somefile`` or ``base_dockerfile: Otherfile`` if
+# your Dockerfile is named something other than Dockerfile.)
+
+- name: Set default build configuration
+  set_fact:
+    podman_images: "{{
+      {image: _entry}|combine(podman_images|default({}))
+    }}"
+  vars:
+    _parts: "{{ image.split(':') }}"
+    _label: "{{ _parts[0]|regex_replace('^tpa/', '') }}"
+    _version: "{{ _parts[1]|default('latest') }}"
+    _image_key: "{{ '%s-%s' % (_label, _version) }}"
+    _entry:
+      base_image: "{{ _tpa_images[_image_key] }}"
+      context_path: podman/images
+    _tpa_images:
+      debian-9: debian:9
+      debian-stretch: debian:9
+      debian-10: debian:10
+      debian-buster: debian:10
+      debian-11: debian:11
+      debian-bullseye: debian:11
+      debian-latest: debian:11
+      ubuntu-18.04: ubuntu:bionic
+      ubuntu-bionic: ubuntu:bionic
+      ubuntu-20.04: ubuntu:focal
+      ubuntu-focal: ubuntu:focal
+      ubuntu-latest: ubuntu:focal
+      redhat-7: centos:7
+      redhat-8: rockylinux:8
+      redhat-latest: rockylinux:8
+      rocky-8: rockylinux:8
+      rocky-latest: rockylinux:8
+      centos-8: centos:8
+      almalinux-8: almalinux:8
+      almalinux-latest: almalinux:8
+  when:
+    image.startswith('tpa/')
+    and _image_key in _tpa_images
+
+- assert:
+    msg: "Please specify build instructions for {{ image }} in podman_images"
+    that: image in podman_images|default({})
+
+- name: Build base image for {{ image }} if needed
+  containers.podman.podman_image:
+    name: "{{ _base_image_name }}"
+    state: present
+    build:
+      path: "{{ _entry.base_context_path }}"
+      file: "{{ _entry.base_file|default(omit) }}"
+  register: base_image
+  vars:
+    _entry: "{{ podman_images[image] }}"
+    _parts: "{{ image.split(':') }}"
+    _base_image_name: "{{
+      _entry.base_image_name|default('%s-base:%s' % (_parts[0], _parts[1]|default('latest')))
+    }}"
+  when:
+    _entry.base_context_path is defined
+
+- name: Build final podman image {{ image }}
+  containers.podman.podman_image:
+    name: "{{ image }}"
+    state: present
+    path: "{{ _entry.context_path }}"
+    build:
+      # Specify the base image using the container-id of the parent, so we
+      # ensure we build on top of exactly what we produced in the event of
+      # concurrent rebuilds/re-tags, etc.
+      extra_args: "--build-arg 'BASE_IMAGE={{ base_image.image.Id|default(_entry.base_image|default('none')) }}'"
+      cache: "{{ _entry.cache|default('yes') }}"
+    pull: "{{ _entry['pull']|default(_pull) }}"
+  vars:
+    _entry: "{{ podman_images[image] }}"
+    _pull: "{{
+      lookup('env', 'TPA_PODMAN_PULL_BASE_IMAGE') or 'yes'
+    }}"

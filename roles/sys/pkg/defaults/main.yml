@@ -49,7 +49,7 @@ default_packages:
   Debian:
     - "{{ (ansible_distribution_release == 'jessie')|ternary('linux-tools', 'linux-perf') }}"
     # Required for hostnamectl, used in sys
-    - "{{ ['dbus'] if platform not in ['docker', 'lxd', 'vagrant'] else [] }}"
+    - "{{ ['dbus'] if platform not in ['docker', 'lxd', 'podman', 'vagrant'] else [] }}"
     - openssh-client
     - "{{ python_pkg_prefix }}-apt"
     - cron

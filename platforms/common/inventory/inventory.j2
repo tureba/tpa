@@ -3,6 +3,8 @@
 {% for h in instance_vars %}
 {% if h.platform == 'docker' %}
 {{ h.Name }} ansible_connection=docker node={{ h.node }} platform={{ h.platform }}
+{% elif h.platform == 'podman' %}
+{{ h.Name }} ansible_connection=podman node={{ h.node }} platform={{ h.platform }} ansible_host={{ cluster_name }}_{{ h.Name }}
 {% else%}
 {{ h.Name }} {% if not ansible_tower %}ansible_host={{ h|deploy_ip_address }}{% endif %} node={{ h.node }} platform={{ h.platform }}
 {% endif%}

@@ -1,0 +1,45 @@
+---
+
+# © Copyright EnterpriseDB UK Limited 2015-2021 - All rights reserved.
+
+- name: Ensure that every instance has a defined image
+  assert:
+    msg: "Please set 'image' on every instance"
+    that:
+      - podman_instances|selectattr('image','defined')|list|count == podman_instances|count
+
+- name: Ensure that podman_images, if defined, is a hash
+  assert:
+    msg: "Expected podman_images to map image names to build instructions"
+    that:
+      - podman_images is not defined or
+        podman_images is mapping
+
+- name: Set valid instance keys
+  set_fact:
+    valid_instance_keys: "{{
+      valid_instance_keys|default({})|combine({
+        'podman': instance_keys
+      })
+    }}"
+  vars:
+    instance_keys:
+    - image
+    - privileged
+    - restart_policy
+    - memory
+    - memory_reservation
+    - shm_size
+    - env_file
+    - env
+    - log_driver
+    - log_options
+    - exposed_ports
+    - published_ports
+    - devices
+    - sysctls
+    - ulimits
+    - local_source_directories
+    - podman_security_opts
+    - podman_cap_add
+    - podman_cap_drop

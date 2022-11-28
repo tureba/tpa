@@ -13,3 +13,11 @@
     delegate_to: localhost
     when:
       platform in ['docker']
+  - podman_container:
+      name: "{{ inventory_hostname }}"
+      state: started
+      comparisons:
+        '*': ignore
+    delegate_to: localhost
+    when:
+      platform in ['podman']

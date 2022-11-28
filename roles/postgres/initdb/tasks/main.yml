@@ -68,7 +68,7 @@
     restorecon.stdout.strip() not in ['', '0']
   when:
     secontext_dirs is not empty
-    and platform not in ['docker']
+    and platform not in ['docker', 'podman']
 
 # Even if PGDATA was not initialised when we ran minimal_postgres_setup
 # from init, we may now have a valid PGDATA now after mounting a volume

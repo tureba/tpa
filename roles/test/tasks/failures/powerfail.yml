@@ -25,7 +25,7 @@
       connect_timeout: 30
       sleep: 15
       timeout: 120
-  when: platform != 'docker'
+  when: not platform in ['docker', 'podman']
 
 - name: Powerfail for docker
   block:
@@ -56,3 +56,33 @@
     args:
       executable: /bin/bash
   when: platform == 'docker'
+
+- name: powerfail for podman
+  block:
+  # save /etc/hosts to restore later
+  - name: Update /etc/hosts
+    command: cp /etc/hosts /tmp/hosts_existing
+
+  - name: kill podman container
+    shell: >
+      podman kill {{ inventory_hostname }}
+    delegate_to: localhost
+
+  - name: start podman container
+    shell: >
+      sleep {{ powerfail_timeout|default('60') }};
+      podman start {{ inventory_hostname }};
+    args:
+      executable: /bin/bash
+    delegate_to: localhost
+
+  # restore /etc/hosts
+  - name: Update /etc/hosts
+    shell: >
+     if [[ -f /tmp/hosts_existing ]]; then
+       cat /tmp/hosts_existing >  /etc/hosts;
+       rm /tmp/hosts_existing;
+     fi
+    args:
+      executable: /bin/bash
+  when: platform == 'podman'
