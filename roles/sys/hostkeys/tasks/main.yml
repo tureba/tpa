@@ -24,7 +24,7 @@
   - ["rsa", "ecdsa"]
   - ["", ".pub"]
   when:
-    platform in ['docker'] or (
+    platform in ['docker', 'podman'] or (
       platform == 'bare'
       and manage_ssh_hostkeys|default(false)|bool
     )

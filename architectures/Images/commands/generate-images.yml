@@ -43,3 +43,10 @@
         docker commit {{ inventory_hostname }} {{ _image_name|lower }}
       delegate_to: localhost
     when: platform == 'docker'
+
+  - name: Generate container images for podman
+    block:
+    - command: >
+        podman commit {{ inventory_hostname }} {{ _image_name|lower }}
+      delegate_to: localhost
+    when: platform == 'podman'

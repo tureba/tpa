@@ -50,7 +50,7 @@ class Platform:
         """
         Returns a list of all platform names
         """
-        return ["aws", "bare", "docker"]
+        return ["aws", "bare", "docker", "podman"]
 
     @property
     def default_volume_device_name(self):

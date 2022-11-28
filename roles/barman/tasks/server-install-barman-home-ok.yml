@@ -26,4 +26,4 @@
           SUSE: cron
   when: >
     barman_home_ok is changed and
-    platform in ['docker']
+    platform in ['docker', 'podman']

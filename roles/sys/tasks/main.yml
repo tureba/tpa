@@ -61,7 +61,7 @@
     name: "{{ inventory_hostname }}"
     use: systemd
   when:
-    platform not in ['docker', 'lxd']
+    platform not in ['docker', 'lxd', 'podman']
     and target_container_type is not defined
     and task_selector|permits('hostname')
 
@@ -102,7 +102,7 @@
 - include_role:
     name: sys/sysctl
   when: >
-    platform not in ['docker', 'lxd']
+    platform not in ['docker', 'lxd', 'podman']
     and target_container_type is not defined
     and task_selector|permits('sysctl')
 
@@ -114,7 +114,7 @@
 - include_role:
     name: sys/openvpn
   when: >
-    platform not in ['docker', 'vagrant'] and
+    platform not in ['docker', 'podman', 'vagrant'] and
     'role_openvpn-server' in groups
     and task_selector|permits('openvpn')
 
@@ -131,9 +131,8 @@
 - include_role:
     name: sys/cloudinit
   when: >
-    platform not in ['docker', 'lxd', 'vagrant']
+    platform not in ['docker', 'lxd', 'podman', 'vagrant']
     and task_selector|permits('cloudinit')
-
 
 # The sys/ssl role is incompatible with the legacy method of generating a
 # certificate for postgres. When proper certificate authentication has been
@@ -168,7 +167,7 @@
     path: /run/nologin
     state: absent
   when:
-    platform in ['docker']
+    platform in ['docker', 'podman']
     or target_container_type|default('unknown') == 'docker'
 
 # RemoveIPC=no in logind.conf is necessary for source builds because
