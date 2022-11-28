@@ -7,6 +7,8 @@
 
 - name: Install gpg
   raw: command -v gpg >/dev/null 2>&1 || yum -y install gnupg2; true
+  args:
+    executable: /bin/sh
 
   register: gpg_install
   changed_when: >
@@ -16,6 +18,8 @@
 
 - name: Install curl
   raw: command -v curl >/dev/null 2>&1 || yum -y install curl; true
+  args:
+    executable: /bin/sh
 
   register: curl_install
   changed_when: >

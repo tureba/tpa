@@ -8,6 +8,8 @@
 - name: Run apt-get update
   raw: >-
     apt-get -q -y {{ allow_releaseinfo_change }} update
+  args:
+    executable: /bin/sh
 
   register: update
   changed_when: >
@@ -28,6 +30,8 @@
 
 - name: Install python
   raw: if ! command -v {{ python }} >/dev/null 2>&1; then apt-get -q -y install {{ python_package_name }}; fi
+  args:
+    executable: /bin/sh
 
   register: python_install
   changed_when: >
