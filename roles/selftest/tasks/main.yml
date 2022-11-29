@@ -13,6 +13,7 @@
       - ansible_facts.python_version is version('3.6', '>=')
       - ansible_version.major == 2
       - ansible_version.minor == 9
+  when: false
 
 - name: Ensure that local dependencies are installed
   become: no

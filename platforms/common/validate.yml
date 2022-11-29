@@ -28,6 +28,7 @@
       - ansible_version.major == 2
       - ansible_version.minor == 9
   tags: prereqs
+  when: false
 
 - import_tasks: validate-compat.yml
 
